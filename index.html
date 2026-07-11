@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard OEE - Producción</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --ink: #24324a;
+      --muted: #6c7a8c;
+      --primary: #7b8cff;
+      --primary-soft: #e8ebff;
+      --accent: #f7b267;
+      --accent-soft: #fff2e4;
+      --success: #78c7a2;
+      --success-soft: #ebf8f1;
+      --danger: #f28c8c;
+      --danger-soft: #fdeeee;
+      --border: #e5e8f0;
+      --shadow: 0 12px 30px rgba(36, 50, 74, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+      background: linear-gradient(135deg, #f8f8ff 0%, var(--bg) 100%);
+      color: var(--ink);
+    }
+
+    .page {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .hero {
+      background: linear-gradient(120deg, var(--primary-soft), var(--accent-soft));
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 24px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero h1 {
+      margin: 4px 0 8px;
+      font-size: 28px;
+    }
+
+    .hero p { margin: 0; color: var(--muted); max-width: 720px; }
+
+    .eyebrow {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.75);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--primary);
+      margin-bottom: 10px;
+    }
+
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+    .upload-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .status {
+      font-size: 13px;
+      color: var(--muted);
+      background: rgba(255,255,255,0.72);
+      padding: 6px 10px;
+      border-radius: 999px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(36, 50, 74, 0.12); }
+    .btn.primary { background: var(--primary); color: white; }
+    .btn.secondary { background: white; color: var(--ink); }
+    .btn.ghost { background: rgba(255,255,255,0.75); color: var(--ink); }
+
+    .controls {
+      margin: 20px 0 24px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      background: var(--card);
+      padding: 16px 18px;
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 180px;
+    }
+
+    label { font-size: 13px; font-weight: 700; color: var(--muted); }
+    select {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px 10px;
+      background: #fcfcff;
+      color: var(--ink);
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: var(--card);
+      padding: 16px 18px;
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      min-height: 120px;
+    }
+
+    .card .label { color: var(--muted); font-size: 13px; font-weight: 700; }
+    .card .value { font-size: 28px; font-weight: 800; margin: 8px 0 6px; }
+    .card .hint { color: var(--muted); font-size: 13px; }
+
+    .card.primary { border-left: 4px solid var(--primary); }
+    .card.accent { border-left: 4px solid var(--accent); }
+    .card.success { border-left: 4px solid var(--success); }
+    .card.danger { border-left: 4px solid var(--danger); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .panel {
+      background: var(--card);
+      padding: 18px;
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+
+    .panel h3 { margin-top: 0; margin-bottom: 12px; font-size: 18px; }
+
+    svg { width: 100%; height: 280px; }
+    .bar-list { display: flex; flex-direction: column; gap: 10px; }
+    .bar-row { display: grid; grid-template-columns: 90px 1fr 70px; gap: 10px; align-items: center; }
+    .bar-track {
+      height: 12px;
+      background: #f0f2f8;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--primary), var(--success));
+    }
+
+    .insight-list { display: grid; gap: 10px; }
+    .insight-item {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: #f8f9ff;
+      border: 1px solid var(--border);
+      color: var(--ink);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+    }
+    th, td { padding: 10px 8px; border-bottom: 1px solid var(--border); text-align: left; font-size: 13px; }
+    th { color: var(--muted); font-weight: 700; }
+
+    @media (max-width: 980px) {
+      .cards { grid-template-columns: repeat(2, 1fr); }
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      .page { padding: 14px; }
+      .hero { flex-direction: column; align-items: flex-start; }
+      .cards { grid-template-columns: 1fr; }
+      .bar-row { grid-template-columns: 70px 1fr 56px; }
+    }
+
+    @media print {
+      body { background: white; }
+      .hero-actions, .controls { display: none !important; }
+      .page { padding: 0; }
+      .hero, .panel, .card { box-shadow: none; border: 1px solid #ddd; }
+      .hero { background: #f7f7f7; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div>
+        <span class="eyebrow">Dashboard ejecutivo</span>
+        <h1>Monitoreo OEE y producción</h1>
+        <p>Indicadores clave para la toma de decisiones de gerencia: rendimiento, calidad, paradas y tendencias operativas.</p>
+      </div>
+      <div class="hero-actions">
+        <div class="upload-group">
+          <input type="file" id="csvFile" accept=".csv,text/csv" hidden />
+          <button class="btn secondary" type="button" onclick="document.getElementById('csvFile').click()">Cargar CSV</button>
+          <span id="fileStatus" class="status">Datos activos: muestra inicial</span>
+        </div>
+        <button class="btn primary" onclick="exportCsv()">Exportar CSV</button>
+        <button class="btn secondary" onclick="exportSummary()">Exportar resumen</button>
+        <button class="btn ghost" onclick="exportPdf()">Exportar PDF</button>
+      </div>
+    </header>
+
+    <section class="controls">
+      <div class="control-group">
+        <label for="lineaFilter">Línea</label>
+        <select id="lineaFilter" onchange="renderDashboard()">
+          <option value="">Todas las líneas</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label for="turnoFilter">Turno</label>
+        <select id="turnoFilter" onchange="renderDashboard()">
+          <option value="">Todos los turnos</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="cards">
+      <article class="card primary">
+        <div class="label">Unidades producidas</div>
+        <div class="value" id="totalUnits">0</div>
+        <div class="hint" id="unitsHint">Total del periodo</div>
+      </article>
+      <article class="card accent">
+        <div class="label">OEE promedio</div>
+        <div class="value" id="avgOee">0%</div>
+        <div class="hint" id="oeeHint">Promedio ponderado</div>
+      </article>
+      <article class="card success">
+        <div class="label">Defectos</div>
+        <div class="value" id="defectUnits">0</div>
+        <div class="hint" id="defectHint">Unidades defectuosas</div>
+      </article>
+      <article class="card danger">
+        <div class="label">Paradas</div>
+        <div class="value" id="downtime">0 min</div>
+        <div class="hint" id="downtimeHint">Tiempo acumulado</div>
+      </article>
+    </section>
+
+    <section class="grid">
+      <article class="panel">
+        <h3>Tendencia de OEE</h3>
+        <svg id="lineChart" viewBox="0 0 640 280" aria-label="Gráfico lineal de tendencia de OEE"></svg>
+      </article>
+      <article class="panel">
+        <h3>Rendimiento por línea</h3>
+        <div id="lineBars" class="bar-list"></div>
+      </article>
+    </section>
+
+    <section class="grid">
+      <article class="panel">
+        <h3>Desempeño por turno</h3>
+        <div id="shiftBars" class="bar-list"></div>
+      </article>
+      <article class="panel">
+        <h3>Hallazgos clave</h3>
+        <div id="insights" class="insight-list"></div>
+      </article>
+    </section>
+
+    <section class="panel">
+      <h3>Detalle de registros</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Línea</th>
+            <th>Turno</th>
+            <th>Unidades</th>
+            <th>Defectos</th>
+            <th>Paradas</th>
+            <th>OEE</th>
+          </tr>
+        </thead>
+        <tbody id="detailRows"></tbody>
+      </table>
+    </section>
+  </div>
+
+  <script>
+    let data = [];
+    let currentFileName = 'muestra inicial';
+
+    async function initDashboard() {
+      const fileInput = document.getElementById('csvFile');
+      fileInput.addEventListener('change', handleFileUpload);
+      await loadCsvFromUrl('monitoreo_oee_produccion.csv', 'muestra inicial');
+    }
+
+    async function loadCsvFromUrl(url, label) {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('No se pudo cargar el archivo desde la ruta indicada.');
+        const text = await response.text();
+        data = parseCsv(text);
+        currentFileName = label;
+        populateFilters();
+        renderDashboard();
+        updateFileStatus(`Datos activos: ${label}`);
+      } catch (error) {
+        updateFileStatus(error.message);
+      }
+    }
+
+    async function handleFileUpload(event) {
+      const [file] = event.target.files || [];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        data = parseCsv(text);
+        currentFileName = file.name;
+        populateFilters();
+        renderDashboard();
+        updateFileStatus(`Datos activos: ${file.name}`);
+      } catch (error) {
+        updateFileStatus(error.message);
+      }
+    }
+
+    function updateFileStatus(message) {
+      document.getElementById('fileStatus').textContent = message;
+    }
+
+    function parseCsv(text) {
+      const delimiter = detectDelimiter(text);
+      const lines = text.trim().split(/\r?\n/).filter(Boolean);
+      if (lines.length < 2) {
+        throw new Error('El archivo CSV está vacío.');
+      }
+
+      const headers = lines[0].split(delimiter).map((h) => h.trim());
+      const requiredHeaders = ['fecha', 'linea', 'turno', 'unidades_producidas', 'unidades_defectuosas', 'tiempo_parada_min', 'eficiencia_oee'];
+      const missingHeaders = requiredHeaders.filter((header) => !headers.includes(header));
+      if (missingHeaders.length) {
+        throw new Error(`La estructura es inválida. Faltan columnas: ${missingHeaders.join(', ')}`);
+      }
+
+      return lines.slice(1).map((line) => {
+        const values = line.split(delimiter);
+        const row = {};
+        requiredHeaders.forEach((header) => {
+          const index = headers.indexOf(header);
+          row[header] = index >= 0 && values[index] ? values[index].trim() : '';
+        });
+
+        const idIndex = headers.indexOf('id');
+        row.id = idIndex >= 0 && values[idIndex] ? Number(values[idIndex]) : 0;
+        row.fecha = row.fecha;
+        row.linea = row.linea;
+        row.turno = row.turno;
+        row.unidades_producidas = Number(row.unidades_producidas);
+        row.unidades_defectuosas = Number(row.unidades_defectuosas);
+        row.tiempo_parada_min = Number(row.tiempo_parada_min);
+        row.eficiencia_oee = Number(row.eficiencia_oee);
+        return row;
+      });
+    }
+
+    function detectDelimiter(text) {
+      const semicolons = (text.match(/;/g) || []).length;
+      const commas = (text.match(/,/g) || []).length;
+      return semicolons >= commas ? ';' : ',';
+    }
+
+    function populateFilters() {
+      const lineFilter = document.getElementById('lineaFilter');
+      const turnoFilter = document.getElementById('turnoFilter');
+      const lines = [...new Set(data.map((row) => row.linea))].sort();
+      const turns = [...new Set(data.map((row) => row.turno))].sort();
+
+      lineFilter.innerHTML = '<option value="">Todas las líneas</option>' + lines.map((line) => `<option value="${line}">${line}</option>`).join('');
+      turnoFilter.innerHTML = '<option value="">Todos los turnos</option>' + turns.map((turno) => `<option value="${turno}">${turno}</option>`).join('');
+    }
+
+    function getFilteredData() {
+      const lineFilter = document.getElementById('lineaFilter').value;
+      const turnoFilter = document.getElementById('turnoFilter').value;
+      return data.filter((row) => {
+        const lineMatch = !lineFilter || row.linea === lineFilter;
+        const turnoMatch = !turnoFilter || row.turno === turnoFilter;
+        return lineMatch && turnoMatch;
+      });
+    }
+
+    function renderDashboard() {
+      const rows = getFilteredData();
+      if (!rows.length) {
+        document.getElementById('totalUnits').textContent = '0';
+        document.getElementById('avgOee').textContent = '0%';
+        document.getElementById('defectUnits').textContent = '0';
+        document.getElementById('downtime').textContent = '0 min';
+        document.getElementById('detailRows').innerHTML = '<tr><td colspan="7">No hay datos para el filtro seleccionado.</td></tr>';
+        document.getElementById('lineChart').innerHTML = '';
+        document.getElementById('lineBars').innerHTML = '';
+        document.getElementById('shiftBars').innerHTML = '';
+        document.getElementById('insights').innerHTML = '';
+        return;
+      }
+
+      const totalUnits = rows.reduce((sum, row) => sum + row.unidades_producidas, 0);
+      const defectUnits = rows.reduce((sum, row) => sum + row.unidades_defectuosas, 0);
+      const downtime = rows.reduce((sum, row) => sum + row.tiempo_parada_min, 0);
+      const avgOee = rows.reduce((sum, row) => sum + row.eficiencia_oee, 0) / rows.length;
+      const defectRate = totalUnits ? (defectUnits / totalUnits) * 100 : 0;
+
+      document.getElementById('totalUnits').textContent = totalUnits.toLocaleString('es-ES');
+      document.getElementById('unitsHint').textContent = `${rows.length} registros analizados`;
+      document.getElementById('avgOee').textContent = `${avgOee.toFixed(1)}%`;
+      document.getElementById('oeeHint').textContent = `Tasa de defectos: ${defectRate.toFixed(1)}%`;
+      document.getElementById('defectUnits').textContent = defectUnits.toLocaleString('es-ES');
+      document.getElementById('defectHint').textContent = `Promedio de OEE ${avgOee.toFixed(1)}%`;
+      document.getElementById('downtime').textContent = `${downtime.toLocaleString('es-ES')} min`;
+      document.getElementById('downtimeHint').textContent = `Paradas acumuladas`;
+
+      renderOeeTrend(rows);
+      renderLineBars(rows);
+      renderShiftBars(rows);
+      renderInsights(rows);
+      renderDetailRows(rows);
+    }
+
+    function renderOeeTrend(rows) {
+      const byDate = {};
+      rows.forEach((row) => {
+        if (!byDate[row.fecha]) {
+          byDate[row.fecha] = { date: row.fecha, oee: [], production: [] };
+        }
+        byDate[row.fecha].oee.push(row.eficiencia_oee);
+        byDate[row.fecha].production.push(row.unidades_producidas);
+      });
+
+      const ordered = Object.values(byDate).sort((a, b) => parseDate(a.date) - parseDate(b.date));
+      const labels = ordered.map((item) => item.date);
+      const values = ordered.map((item) => {
+        const average = item.oee.reduce((sum, value) => sum + value, 0) / item.oee.length;
+        return Number(average.toFixed(1));
+      });
+
+      const svg = document.getElementById('lineChart');
+      const width = 640;
+      const height = 280;
+      const padding = 40;
+      const max = Math.max(...values, 100);
+      const min = Math.min(...values, 70);
+      const innerWidth = width - padding * 2;
+      const innerHeight = height - padding * 2;
+      const points = values.map((value, index) => {
+        const x = padding + (index / Math.max(values.length - 1, 1)) * innerWidth;
+        const y = padding + innerHeight - ((value - min) / Math.max(max - min, 1)) * innerHeight;
+        return { x, y, value };
+      });
+
+      const polyline = points.map((point) => `${point.x},${point.y}`).join(' ');
+      const area = `${points.map((point) => `${point.x},${point.y}`).join(' ')} ${padding + innerWidth},${height - padding} ${padding},${height - padding}`;
+
+      svg.innerHTML = `
+        <rect x="0" y="0" width="${width}" height="${height}" rx="20" fill="#fcfcff"></rect>
+        <line x1="${padding}" y1="${height - padding}" x2="${width - padding}" y2="${height - padding}" stroke="#dfe4ee" stroke-width="1"></line>
+        <line x1="${padding}" y1="${padding}" x2="${padding}" y2="${height - padding}" stroke="#dfe4ee" stroke-width="1"></line>
+        <polygon points="${area}" fill="rgba(123, 140, 255, 0.15)"></polygon>
+        <polyline points="${polyline}" fill="none" stroke="#7b8cff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></polyline>
+        ${points.map((point, index) => `
+          <circle cx="${point.x}" cy="${point.y}" r="5" fill="#fff" stroke="#7b8cff" stroke-width="3"></circle>
+          <text x="${point.x}" y="${height - 12}" text-anchor="middle" font-size="11" fill="#6c7a8c">${labels[index]}</text>
+          <text x="${point.x}" y="${point.y - 10}" text-anchor="middle" font-size="11" fill="#24324a">${point.value.toFixed(1)}%</text>
+        `).join('')}
+      `;
+    }
+
+    function renderLineBars(rows) {
+      const grouped = {};
+      rows.forEach((row) => {
+        if (!grouped[row.linea]) {
+          grouped[row.linea] = { label: row.linea, production: 0, oee: 0, count: 0 };
+        }
+        grouped[row.linea].production += row.unidades_producidas;
+        grouped[row.linea].oee += row.eficiencia_oee;
+        grouped[row.linea].count += 1;
+      });
+
+      const dataPoints = Object.values(grouped).map((item) => ({
+        label: item.label,
+        value: item.production,
+        oee: item.oee / item.count
+      }));
+      const max = Math.max(...dataPoints.map((item) => item.value), 1);
+      const container = document.getElementById('lineBars');
+      container.innerHTML = dataPoints.sort((a, b) => b.value - a.value).map((item) => `
+        <div class="bar-row">
+          <div>${item.label}</div>
+          <div class="bar-track"><div class="bar-fill" style="width: ${(item.value / max) * 100}%"></div></div>
+          <div>${item.value.toLocaleString('es-ES')}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderShiftBars(rows) {
+      const grouped = {};
+      rows.forEach((row) => {
+        if (!grouped[row.turno]) {
+          grouped[row.turno] = { label: row.turno, downtime: 0, oee: 0, count: 0 };
+        }
+        grouped[row.turno].downtime += row.tiempo_parada_min;
+        grouped[row.turno].oee += row.eficiencia_oee;
+        grouped[row.turno].count += 1;
+      });
+
+      const dataPoints = Object.values(grouped).map((item) => ({
+        label: item.label,
+        value: item.downtime,
+        oee: item.oee / item.count
+      }));
+      const max = Math.max(...dataPoints.map((item) => item.value), 1);
+      const container = document.getElementById('shiftBars');
+      container.innerHTML = dataPoints.sort((a, b) => b.value - a.value).map((item) => `
+        <div class="bar-row">
+          <div>${item.label}</div>
+          <div class="bar-track"><div class="bar-fill" style="width: ${(item.value / max) * 100}%; background: linear-gradient(90deg, #f7b267, #f28c8c);"></div></div>
+          <div>${item.value} min</div>
+        </div>
+      `).join('');
+    }
+
+    function renderInsights(rows) {
+      const byLine = {};
+      rows.forEach((row) => {
+        if (!byLine[row.linea]) {
+          byLine[row.linea] = { label: row.linea, oee: 0, count: 0, downtime: 0 };
+        }
+        byLine[row.linea].oee += row.eficiencia_oee;
+        byLine[row.linea].downtime += row.tiempo_parada_min;
+        byLine[row.linea].count += 1;
+      });
+
+      const lines = Object.values(byLine).map((item) => ({
+        label: item.label,
+        oee: item.oee / item.count,
+        downtime: item.downtime
+      }));
+
+      const best = lines.reduce((prev, current) => (current.oee > prev.oee ? current : prev));
+      const worst = lines.reduce((prev, current) => (current.oee < prev.oee ? current : prev));
+      const highDowntime = lines.reduce((prev, current) => (current.downtime > prev.downtime ? current : prev));
+      const insights = [
+        `${best.label} es la línea con mejor desempeño, con un OEE promedio de ${best.oee.toFixed(1)}%.`,
+        `${worst.label} muestra el menor rendimiento con ${worst.oee.toFixed(1)}% de OEE y requiere intervención prioritaria.`,
+        `${highDowntime.label} concentra las paradas más altas, lo que impacta la continuidad de la producción.`
+      ];
+
+      document.getElementById('insights').innerHTML = insights.map((insight) => `<div class="insight-item">${insight}</div>`).join('');
+    }
+
+    function renderDetailRows(rows) {
+      const tbody = document.getElementById('detailRows');
+      tbody.innerHTML = rows.slice(-8).reverse().map((row) => `
+        <tr>
+          <td>${row.fecha}</td>
+          <td>${row.linea}</td>
+          <td>${row.turno}</td>
+          <td>${row.unidades_producidas}</td>
+          <td>${row.unidades_defectuosas}</td>
+          <td>${row.tiempo_parada_min}</td>
+          <td>${row.eficiencia_oee}%</td>
+        </tr>
+      `).join('');
+    }
+
+    function parseDate(value) {
+      const [day, month, year] = value.split('/');
+      return new Date(Number(year), Number(month) - 1, Number(day));
+    }
+
+    function exportCsv() {
+      const rows = getFilteredData();
+      const headers = ['id', 'fecha', 'linea', 'turno', 'unidades_producidas', 'unidades_defectuosas', 'tiempo_parada_min', 'eficiencia_oee'];
+      const csv = [headers.join(';'), ...rows.map((row) => headers.map((h) => row[h]).join(';'))].join('\n');
+      const fileName = currentFileName ? `${currentFileName.replace(/\.csv$/i, '')}_filtrado.csv` : 'oee_produccion_filtrado.csv';
+      downloadFile(csv, fileName, 'text/csv;charset=utf-8;');
+    }
+
+    function exportSummary() {
+      const rows = getFilteredData();
+      const summary = {
+        registros: rows.length,
+        unidades_producidas: rows.reduce((sum, row) => sum + row.unidades_producidas, 0),
+        defectos: rows.reduce((sum, row) => sum + row.unidades_defectuosas, 0),
+        tiempo_parada_min: rows.reduce((sum, row) => sum + row.tiempo_parada_min, 0),
+        oee_promedio: (rows.reduce((sum, row) => sum + row.eficiencia_oee, 0) / rows.length).toFixed(1)
+      };
+      const content = JSON.stringify(summary, null, 2);
+      downloadFile(content, 'resumen_oee.json', 'application/json;charset=utf-8;');
+    }
+
+    function exportPdf() {
+      window.print();
+    }
+
+    function downloadFile(content, filename, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+    }
+
+    window.addEventListener('DOMContentLoaded', initDashboard);
+  </script>
+</body>
+</html>
